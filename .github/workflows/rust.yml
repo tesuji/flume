@@ -37,7 +37,18 @@ jobs:
             target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
+    - run: rustup set profile minimal
+    - run: |
+        set -e
+        if rustup check | grep stable-x86_64 | grep 'Update available'; then
+          rustup component remove rust-docs
+          rustup update --no-self-update
+        fi
+      shell: bash
+      if: matrix.channel == 'stable'
     - run: rustup default ${{ matrix.channel }}-${{ matrix.target }}
+      if: !contains( ['x86_64-unknown-linux-gnu', 'x86_64-apple-darwin', 'x86_64-pc-windows-msvc'], matrix.target )
+    - run:
     - name: Install g++-multilib
       run: sudo apt-get install -qq g++-multilib
       shell: bash

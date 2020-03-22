@@ -8,12 +8,37 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [stable, linux32, macos, win32, win64]
+        include:
+          - build: stable
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: linux32
+            os: ubuntu-latest
+            rust: stable
+            target: i686-unknown-linux-gnu
+          - build: macos
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+            no_run: --no-run
+          - build: win32
+            os: windows-latest
+            rust: stable-i686-msvc
+            target: i686-pc-windows-msvc
+          - build: win64
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
+    - run: rustup target add ${{ matrix.target }}
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --target ${{ matrix.target }}
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --target ${{ matrix.target }}
+    - run: cargo build --all-targets --target ${{ matrix.target }}

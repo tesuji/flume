@@ -19,7 +19,8 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - build: linux32
             os: ubuntu-latest
-            rust: stable
+            # FIXME: Make this stable again when next stable released (1.43.0)
+            rust: beta
             target: i686-unknown-linux-gnu
           - build: macos
             os: macos-latest
@@ -36,7 +37,7 @@ jobs:
             target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
-    - run: rustup target add ${{ matrix.target }}
+    - run: rustup default ${{ matrix.rust }}-${{ matrix.target }}
     - name: Build
       run: cargo build --target ${{ matrix.target }}
     - name: Run tests

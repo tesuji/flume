@@ -8,12 +8,50 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [stable, linux32, macos, win32, win64]
+        include:
+          - build: stable
+            os: ubuntu-latest
+            channel: stable
+            target: x86_64-unknown-linux-gnu
+          - build: linux32
+            os: ubuntu-latest
+            channel: stable
+            target: i686-unknown-linux-gnu
+          - build: macos
+            os: macos-latest
+            channel: stable
+            target: x86_64-apple-darwin
+          - build: win32
+            os: windows-latest
+            channel: stable
+            target: i686-pc-windows-msvc
+          - build: win64
+            os: windows-latest
+            channel: stable
+            target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - run: |
+        if echo ${{ matrix.target }} | grep -q -v -E 'x86_64-(unknown-linux-gnu|apple-darwin|pc-windows-msvc)'; then
+          rustup default ${{ matrix.channel }}-${{ matrix.target }}
+        fi
+      shell: bash
+    - name: Rust version
+      run: |
+        set -ex
+        rustc -Vv
+        cargo -V
+        rustup show
+      shell: bash
+    - name: Install g++-multilib for i686-unknown-linux-gnu
+      run: sudo apt-get install -qq g++-multilib
+      shell: bash
+      if: matrix.build == 'linux32'
+    - run: cargo build --target ${{ matrix.target }}
+    - run: cargo test --target ${{ matrix.target }}
+    - run: cargo build --all-targets --target ${{ matrix.target }}
+    - run: cargo build --all-targets --no-default-features --target ${{ matrix.target }}

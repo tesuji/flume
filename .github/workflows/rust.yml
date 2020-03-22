@@ -26,7 +26,6 @@ jobs:
             os: macos-latest
             channel: stable
             target: x86_64-apple-darwin
-            no_run: --no-run
           - build: win32
             os: windows-latest
             channel: stable
@@ -51,7 +50,6 @@ jobs:
           rustup default ${{ matrix.channel }}-${{ matrix.target }}
         fi
       shell: bash
-    - run:
     - name: Install g++-multilib
       run: sudo apt-get install -qq g++-multilib
       shell: bash

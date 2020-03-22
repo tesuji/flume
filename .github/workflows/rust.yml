@@ -15,31 +15,37 @@ jobs:
         include:
           - build: stable
             os: ubuntu-latest
-            rust: stable
+            channel: stable
             target: x86_64-unknown-linux-gnu
           - build: linux32
             os: ubuntu-latest
             # FIXME: Make this stable again when next stable released (1.43.0)
-            rust: beta
+            channel: beta
             target: i686-unknown-linux-gnu
           - build: macos
             os: macos-latest
-            rust: stable
+            channel: stable
             target: x86_64-apple-darwin
             no_run: --no-run
           - build: win32
             os: windows-latest
-            rust: stable-i686-msvc
+            channel: stable
             target: i686-pc-windows-msvc
           - build: win64
             os: windows-latest
-            rust: stable
+            channel: stable
             target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
-    - run: rustup default ${{ matrix.rust }}-${{ matrix.target }}
+    - run: rustup default ${{ matrix.channel }}-${{ matrix.target }}
+    - run: rustup target add ${{ matrix.target }}
+    - name: Install g++-multilib
+      run: sudo apt-get install -qq g++-multilib
+      shell: bash
+      if: matrix.build == 'linux32'
     - name: Build
       run: cargo build --target ${{ matrix.target }}
     - name: Run tests
       run: cargo test --target ${{ matrix.target }}
+    - run: cargo test --no-default-features --target ${{ matrix.target }}
     - run: cargo build --all-targets --target ${{ matrix.target }}

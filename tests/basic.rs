@@ -35,6 +35,7 @@ fn iter_threaded() {
     assert_eq!(rx.iter().sum::<u32>(), (0..1000).sum());
 }
 
+#[cfg_attr(any(target_os = "macos", windows), ignore)]
 #[test]
 fn send_timeout() {
     let (tx, rx) = bounded(1);
@@ -60,7 +61,6 @@ fn send_timeout() {
 #[test]
 fn recv_timeout() {
     let (tx, rx) = unbounded();
-
     let dur = Duration::from_millis(350);
     let then = Instant::now();
     assert!(rx.recv_timeout(dur).is_err());
@@ -75,10 +75,10 @@ fn recv_timeout() {
     assert!(Instant::now().duration_since(now) < max_error);
 }
 
+#[cfg_attr(any(target_os = "macos", windows), ignore)]
 #[test]
 fn recv_deadline() {
     let (tx, rx) = unbounded();
-
     let dur = Duration::from_millis(350);
     let then = Instant::now();
     assert!(rx.recv_deadline(then.checked_add(dur).unwrap()).is_err());

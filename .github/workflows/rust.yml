@@ -19,8 +19,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - build: linux32
             os: ubuntu-latest
-            # FIXME: Make this stable again when next stable released (1.43.0)
-            channel: beta
+            channel: stable
             target: i686-unknown-linux-gnu
           - build: macos
             os: macos-latest
@@ -36,15 +35,6 @@ jobs:
             target: x86_64-pc-windows-msvc
     steps:
     - uses: actions/checkout@v2
-    - run: rustup set profile minimal
-    - run: |
-        set -e
-        if rustup check | grep stable-${{ matrix.target }} | grep -q 'Update available'; then
-          rustup component remove rust-docs
-          rustup update --no-self-update stable-${{ matrix.target }}
-        fi
-      shell: bash
-      if: matrix.channel == 'stable'
     - run: |
         if echo ${{ matrix.target }} | grep -q -v -E 'x86_64-(unknown-linux-gnu|apple-darwin|pc-windows-msvc)'; then
           rustup default ${{ matrix.channel }}-${{ matrix.target }}

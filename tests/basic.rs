@@ -35,21 +35,30 @@ fn iter_threaded() {
     assert_eq!(rx.iter().sum::<u32>(), (0..1000).sum());
 }
 
-#[cfg_attr(any(target_os = "macos", windows), ignore)]
+#[cfg_attr(debug_assertions, ignore)]
 #[test]
 fn send_timeout() {
+    let dur = Duration::from_millis(350);
+    let max_error = if cfg!(target_os = "linux") {
+        Duration::from_millis(5)
+    } else {
+        Duration::from_millis(100)
+    };
+    let dur_min = dur.checked_sub(max_error).unwrap();
+    let dur_max = dur.checked_add(max_error).unwrap();
+
     let (tx, rx) = bounded(1);
 
-    assert!(tx.send_timeout(42, Duration::from_millis(350)).is_ok());
+    assert!(tx.send_timeout(42, dur).is_ok());
 
-    let dur = Duration::from_millis(350);
     let then = Instant::now();
     assert!(tx.send_timeout(43, dur).is_err());
     let now = Instant::now();
 
-    let max_error = Duration::from_millis(5);
-    assert!(now.duration_since(then) < dur.checked_add(max_error).unwrap());
-    assert!(now.duration_since(then) > dur.checked_sub(max_error).unwrap());
+    let this = now.duration_since(then);
+    if !(dur_min < this && this < dur_max) {
+        panic!("timeout exceeded: {:?}", this);
+    }
 
     assert_eq!(rx.drain().count(), 1);
 
@@ -58,35 +67,55 @@ fn send_timeout() {
     assert!(tx.send_timeout(42, Duration::from_millis(350)).is_err());
 }
 
+#[cfg_attr(debug_assertions, ignore)]
 #[test]
 fn recv_timeout() {
-    let (tx, rx) = unbounded();
     let dur = Duration::from_millis(350);
+    let max_error = if cfg!(target_os = "linux") {
+        Duration::from_millis(5)
+    } else {
+        Duration::from_millis(100)
+    };
+    let max_error = Duration::from_millis(5);
+    let dur_min = dur.checked_sub(max_error).unwrap();
+    let dur_max = dur.checked_add(max_error).unwrap();
+
+    let (tx, rx) = unbounded();
     let then = Instant::now();
     assert!(rx.recv_timeout(dur).is_err());
     let now = Instant::now();
 
-    let max_error = Duration::from_millis(5);
-    assert!(now.duration_since(then) < dur.checked_add(max_error).unwrap());
-    assert!(now.duration_since(then) > dur.checked_sub(max_error).unwrap());
+    let this = now.duration_since(then);
+    if !(dur_min < this && this < dur_max) {
+        panic!("timeout exceeded: {:?}", this);
+    }
 
     tx.send(42).unwrap();
     assert_eq!(rx.recv_timeout(dur), Ok(42));
     assert!(Instant::now().duration_since(now) < max_error);
 }
 
-#[cfg_attr(any(target_os = "macos", windows), ignore)]
+#[cfg_attr(debug_assertions, ignore)]
 #[test]
 fn recv_deadline() {
-    let (tx, rx) = unbounded();
     let dur = Duration::from_millis(350);
+    let max_error = if cfg!(target_os = "linux") {
+        Duration::from_millis(5)
+    } else {
+        Duration::from_millis(100)
+    };
+    let dur_min = dur.checked_sub(max_error).unwrap();
+    let dur_max = dur.checked_add(max_error).unwrap();
+
+    let (tx, rx) = unbounded();
     let then = Instant::now();
     assert!(rx.recv_deadline(then.checked_add(dur).unwrap()).is_err());
     let now = Instant::now();
 
-    let max_error = Duration::from_millis(5);
-    assert!(now.duration_since(then) < dur.checked_add(max_error).unwrap());
-    assert!(now.duration_since(then) > dur.checked_sub(max_error).unwrap());
+    let this = now.duration_since(then);
+    if !(dur_min < this && this < dur_max) {
+        panic!("timeout exceeded: {:?}", this);
+    }
 
     tx.send(42).unwrap();
     assert_eq!(rx.recv_deadline(now.checked_add(dur).unwrap()), Ok(42));

@@ -61,8 +61,8 @@ jobs:
         sudo apt-get install g++-multilib
       if: matrix.build == 'linux32'
     - run: cargo build --target ${{ matrix.target }}
-    - run: cargo test --target ${{ matrix.target }}
+    - run: cargo test --target ${{ matrix.target }} -- --test-threads 4
     # Some timeout/deadline tests make more sense to run in release mode.
-    - run: cargo test --release --target ${{ matrix.target }}
+    - run: cargo test --release --target ${{ matrix.target }} -- --test-threads 4
     - run: cargo build --all-targets --target ${{ matrix.target }}
     - run: cargo build --all-targets --no-default-features --target ${{ matrix.target }}
